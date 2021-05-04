@@ -180,7 +180,7 @@ mlr3filters_filter = function(data, type){
 #' alongside their p-value (the lower the p-value the greater the importance)
 #'
 fSelection_filter_anova = function(data){
-  weights = mlr3filters.filter(data, "anova")
+  weights = mlr3filters_filter(data, "anova")
   
   # Pasarlo a p-value y reordenar
   weights$attr_importance = 10^(-weights$attr_importance)
