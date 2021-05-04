@@ -20,7 +20,9 @@ Run *requeriments.R* which will install the necessary libraries.
 
 Once the libraries are installed, inside out code we must import the functions before using them.
 
-```source("featureSelectors.R")```
+```
+source("featureSelectors.R")
+```
 
 These functions receive as input a list with element "d" as the dataset and "tag" as its tags, function *partitionDataTag* can be used to format any dataframe in that way, taking into account that the tag is placed in the last column.
 
