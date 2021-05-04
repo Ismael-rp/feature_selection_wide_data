@@ -36,7 +36,7 @@ partitionDataTag = function(data){
 
 #' Chi squared feature selector from FSelector package
 #' 
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be and/or NUMERICS
 #'  tag feature must be NUMERIC or CATEGORICAL
 #'
@@ -54,7 +54,7 @@ fSelection_filter_chi_squared = function(data){
 
 #' Information gain feature selector from FSelector package
 #'   
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be and/or NUMERICS
 #'  tag feature must be NUMERIC or CATEGORICAL
 #'
@@ -72,7 +72,7 @@ fSelection_filter_information_gain = function(data){
 
 #' Relief feature selector from FSelector package
 #'
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be and/or NUMERICS
 #'  tag feature must be NUMERIC or CATEGORICAL
 #'  
@@ -92,7 +92,7 @@ fSelection_filter_relief = function(data, neighbours.count = 1){
 
 #' Random forest feature selector from FSelector package
 #' 
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be and/or NUMERICS
 #'  tag feature must be NUMERIC or CATEGORICAL
 #'  
@@ -115,7 +115,7 @@ fSelection_random_forest_importance = function(data, importance.type=1){
 
 #' Feature selector based on the t-test from sigFeature package
 #'
-#' @param data: List with element "d" with the dataset and "tag" with its labels
+#' @param data: List with element "d" as the dataset and "tag" as its labels
 #'  dataset features must be NUMERICS
 #'  tag feature must be NUMERIC or CATEGORICAL
 #'
@@ -141,7 +141,7 @@ fSelection_t_test = function(data){
 #' instead of using the type parameter to choose the type of algorithm,
 #' it is chosen with the name of the function.
 #'  
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be NUMERICS
 #'  tag feature must be CATEGORICAL
 #'  
@@ -172,7 +172,7 @@ mlr3filters_filter = function(data, type){
 
 #' ANOVA feature selector from mlr3filters package
 #' 
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be NUMERICS
 #'  tag feature must be CATEGORICAL
 #'
@@ -191,7 +191,7 @@ fSelection_filter_anova = function(data){
 
 #'Algoritmo selector de características SVM-RFE (Recursive Feature Elimination)
 #'
-#' @param data: List with element "d" with the dataset and "tag" with its tags
+#' @param data: List with element "d" as the dataset and "tag" as its tags
 #'  dataset features must be NUMERICS
 #'  tag feature must be NUMERICS or CATEGORICAL and have 2 levels
 #'   
