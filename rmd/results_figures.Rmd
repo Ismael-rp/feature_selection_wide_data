@@ -1,0 +1,579 @@
+---
+title: "Results figures"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+library(knitr)
+
+knitr::opts_chunk$set(
+	message = FALSE,
+	echo = FALSE
+)
+
+knitr::opts_knit$set(
+  root.dir =  rprojroot::find_rstudio_root_file()
+)
+```
+
+
+```{r import, include=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(data.table)
+```
+
+
+```{r plot functions, include=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+#### Area stacked plot functions ####
+dataAreaWinners_compareBalancing_combinations = function(df){
+  
+  combinations = expand.grid(alg=levels(df$alg), fSelector=levels(df$fSelector))
+  
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(alg == combinations$alg[[i]], fSelector==combinations$fSelector[[i]])
+    datas[[i]]=dataAreaWinners_compareBalancing(df2)
+    datas[[i]]$alg=combinations$alg[i]
+    datas[[i]]$fSelector=combinations$fSelector[i]
+  }
+
+ rbindlist(datas)
+}
+
+
+#' Returns data for the stack area plot, with the winners for each type of
+#' resampling for the indicated fSelector, ties are worth 1/n wins, n=number of
+#' tie runs.
+dataAreaWinners_compareBalancing = function(df){
+  
+  # Add groups to divide at the end
+  df=df %>% 
+    group_by(Balancing,percentageFeatures) %>% 
+    mutate(n=n())
+  
+  # Each line is a winner of each configuration, indicating the weight of that win
+  df2 = df %>%
+    group_by(data, alg, fSelector, percentageFeatures) %>% 
+    
+    # Change metric
+    filter(gmean == max(gmean)) %>% 
+    mutate(peso = 1/n())
+  
+  # grouping the balancings and percentageFeatures
+  df3 = df2 %>% 
+    group_by(Balancing,percentageFeatures) %>% 
+    summarise(peso=sum(peso),n=n)
+  
+  # Add frequencies
+  df4 = df3 %>%
+    group_by(Balancing, percentageFeatures) %>% 
+    summarise(wins=sum(peso))
+  
+  df5=df4 %>%
+    group_by(percentageFeatures) %>% 
+    mutate(freq = wins/sum(wins))
+  
+  df5$wins = NULL  
+  
+  # Add zeros in the non-existent combinations
+  df5 = df5 %>% complete(Balancing, percentageFeatures)
+  df5[is.na(df5)] = 0
+  df5
+}
+
+
+dataAreaWinners_compareAlgorithms_combinations = function(df){
+
+  combinations = expand.grid(Balancing=levels(df$Balancing), fSelector=levels(df$fSelector))
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(Balancing==combinations$Balancing[[i]], fSelector==combinations$fSelector[[i]])
+    datas[[i]]=dataAreaWinners_compareAlgorithms(df2)
+    datas[[i]]$Balancing=combinations$Balancing[i]
+    datas[[i]]$fSelector=combinations$fSelector[i]
+  }
+
+ rbindlist(datas)
+}
+
+dataAreaWinners_compareAlgorithms = function(df){
+
+  # Add groups to divide at the end
+  df=df %>% 
+    group_by(alg,percentageFeatures) %>% 
+    mutate(n=n())
+  
+  # Each line is a winner of each configuration, indicating the weight of that win
+  df2 = df %>%
+    group_by(data, Balancing, fSelector, percentageFeatures) %>% 
+    
+    # Change metric
+    filter(gmean == max(gmean)) %>% 
+    mutate(peso = 1/n())
+  
+  # grouping the algorithms and percentageFeatures
+  df3 = df2 %>%
+    group_by(alg,percentageFeatures) %>% 
+    summarise(peso=sum(peso),n=n)
+  
+  # Add frequencies
+  df4 = df3 %>%
+    group_by(alg, percentageFeatures) %>% 
+    summarise(wins=sum(peso))
+  
+  df5=df4 %>%
+    group_by(percentageFeatures) %>% 
+    mutate(freq = wins/sum(wins))
+  
+  df5$wins = NULL  
+  
+  # Add zeros in the non-existent combinations
+  df5 = df5 %>% complete(alg, percentageFeatures)
+  df5[is.na(df5)] = 0
+  df5
+}
+
+
+
+
+dataAreaWinners_compareFSelectors_combinations = function(df){
+
+  combinations = expand.grid(Balancing=levels(df$Balancing), alg=levels(df$alg))
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(Balancing == combinations$Balancing[i], alg==combinations$alg[i])
+    datas[[i]]=dataAreaWinners_compareFSelectors(df2)
+    datas[[i]]$Balancing=combinations$Balancing[i]
+    datas[[i]]$alg=combinations$alg[i]
+  }
+
+ rbindlist(datas)
+}
+
+dataAreaWinners_compareFSelectors = function(df){
+
+  # Add zeros in the non-existent combinations
+  df=df %>% 
+    group_by(fSelector, percentageFeatures) %>% 
+    mutate(n=n())
+  
+  # Each line is a winner of each configuration, indicating the weight of that win
+  df2 = df %>%
+    group_by(data, Balancing, alg, percentageFeatures) %>% 
+    
+    # Change metric
+    filter(gmean == max(gmean)) %>% 
+    mutate(peso = 1/n())
+  
+  # grouping the fSelector and percentageFeatures
+  df3 = df2 %>%
+    group_by(fSelector, percentageFeatures) %>% 
+    summarise(peso=sum(peso),n=n)
+  
+  # Add frequencies
+  df4 = df3 %>%
+    group_by(fSelector, percentageFeatures) %>% 
+    summarise(wins=sum(peso))
+  
+  df5=df4 %>%
+    group_by(percentageFeatures) %>% 
+    mutate(freq = wins/sum(wins))
+  
+  df5$wins = NULL  
+  
+  # Add zeros in the non-existent combinations
+  df5 = df5 %>% complete(fSelector, percentageFeatures)
+  df5[is.na(df5)] = 0
+  df5
+}
+
+
+
+dataAreaWinners_compareEnsembleType_combinations = function(df){
+
+  combinations = expand.grid(alg=levels(df$alg), fSelector=levels(df$fSelector))
+  
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(alg == combinations$alg[i], fSelector==combinations$fSelector[i])
+    datas[[i]]=dataAreaWinners_compareEnsembleType(df2)
+    datas[[i]]$alg=combinations$alg[i]
+    datas[[i]]$fSelector=combinations$fSelector[i]
+  }
+  
+  rbindlist(datas)
+}
+
+
+dataAreaWinners_compareEnsembleType = function(df){
+  
+  # Add groups to divide at the end
+  df=df %>% 
+    group_by(fSelectorType,percentageFeatures) %>% 
+    mutate(n=n())
+  
+  # Each line is a winner of each configuration, indicating the weight of that win
+  df2 = df %>%
+    group_by(data, alg, fSelector, percentageFeatures) %>% 
+    
+    # Change metric
+    filter(gmean == max(gmean)) %>% 
+    mutate(peso = 1/n())
+  
+  # grouping the balancings and percentageFeatures
+  df3 = df2 %>% 
+    group_by(fSelectorType, percentageFeatures) %>% 
+    summarise(peso=sum(peso),n=n)
+
+  # Add frequencies
+  df4 = df3 %>%
+    group_by(fSelectorType, percentageFeatures) %>% 
+    summarise(wins=sum(peso))
+  
+  df5=df4 %>%
+    group_by(percentageFeatures) %>% 
+    mutate(freq = wins/sum(wins))
+  
+  df5$wins = NULL  
+  
+  # Add zeros in the non-existent combinations
+  df5 = df5 %>% complete(fSelectorType, percentageFeatures)
+  df5[is.na(df5)] = 0
+  df5
+}
+
+
+#### Top plot functions ####
+dataRanking_compareBalancing_combinations = function(df){
+  
+  combinations = expand.grid(alg=levels(df$alg), fSelector=levels(df$fSelector))
+  
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(alg == combinations$alg[i], fSelector==combinations$fSelector[i])
+    datas[[i]]=dataRanking_compareBalancing(df2)
+    datas[[i]]$alg=combinations$alg[i]
+    datas[[i]]$fSelector=combinations$fSelector[i]
+  }
+  
+  rbindlist(datas)
+}
+
+
+# Takes the ranking of each run for different swings, average them out. 
+dataRanking_compareBalancing = function(df){
+  
+  # Add ranking to each run
+  rRanks = df %>%
+    group_by(alg, data, percentageFeatures) %>% 
+    
+    # Change metric
+    arrange(-gmean) %>%
+    mutate(rank=row_number())
+  
+  # average the rankings
+  rRanks = rRanks %>% 
+    group_by(percentageFeatures, Balancing) %>% 
+    summarise(rankMean = mean(rank))
+  
+  rRanks
+}
+
+
+
+dataRanking_compareAlgorithms_combinations = function(df){
+  
+  combinations = expand.grid(Balancing=levels(df$Balancing), fSelector=levels(df$fSelector))
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(Balancing==combinations$Balancing[[i]], fSelector==combinations$fSelector[[i]])
+    datas[[i]]=dataRanking_compareAlgorithms(df2)
+    datas[[i]]$Balancing=combinations$Balancing[i]
+    datas[[i]]$fSelector=combinations$fSelector[i]
+  }
+
+  rbindlist(datas)
+}
+
+dataRanking_compareAlgorithms = function(df){
+  
+  # Add ranking to each run
+  rRanks = df %>%
+    group_by(Balancing, data, percentageFeatures) %>% 
+    
+    # Change metric
+    arrange(-gmean) %>%
+    mutate(rank=row_number())
+  
+  # average the rankings
+  rRanks = rRanks %>% 
+    group_by(percentageFeatures, alg) %>% 
+    summarise(rankMean = mean(rank))
+  
+  rRanks
+}
+
+
+
+dataRanking_compareFSelectors_combinations = function(df){
+  
+  combinations = expand.grid(Balancing=levels(df$Balancing), alg=levels(df$alg))
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(Balancing == combinations$Balancing[i], alg==combinations$alg[i])
+    datas[[i]]=dataRanking_compareFSelectors(df2)
+    datas[[i]]$Balancing=combinations$Balancing[i]
+    datas[[i]]$alg=combinations$alg[i]
+  }
+
+  rbindlist(datas)
+}
+
+dataRanking_compareFSelectors = function(df){
+  
+  
+  # Add ranking to each run
+  rRanks = df %>%
+    group_by(Balancing, data, percentageFeatures) %>% 
+    
+    # Change metric
+    arrange(-gmean) %>%
+    mutate(rank=row_number())
+  
+  # average the rankings
+  rRanks = rRanks %>% 
+    group_by(percentageFeatures, fSelector) %>% 
+    summarise(rankMean = mean(rank))
+  
+  rRanks
+}
+
+
+
+dataRanking_compareEnsembleType_combinations = function(df){
+  
+  combinations = expand.grid(alg=levels(df$alg), fSelector=levels(df$fSelector))
+  
+  datas = list()
+  
+  for(i in seq(nrow(combinations))){
+    df2 = df %>% filter(alg == combinations$alg[i], fSelector==combinations$fSelector[i])
+    datas[[i]]=dataRanking_compareEnsembleType(df2)
+    datas[[i]]$alg=combinations$alg[i]
+    datas[[i]]$fSelector=combinations$fSelector[i]
+  }
+  
+  rbindlist(datas)
+}
+
+
+dataRanking_compareEnsembleType = function(df){
+  
+  # Add ranking to each run
+  rRanks = df %>%
+    group_by(Balancing, fSelector, data, percentageFeatures) %>% 
+    arrange(-gmean) %>%
+    mutate(rank=row_number())
+  
+  # average the rankings
+  rRanks = rRanks %>% 
+    group_by(percentageFeatures, fSelectorType) %>% 
+    summarise(rankMean = mean(rank))
+  
+  rRanks
+}
+
+```
+
+
+
+
+```{r}
+df = readRDS("rdm/summarised_results.rds")
+```
+
+# Balancing strategy of victories
+```{r , fig.width=10, fig.height=10, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+dataArea = dataAreaWinners_compareBalancing_combinations(df)
+
+ggplot(dataArea, aes(y=freq*100, fill=Balancing)) + 
+  geom_area(aes(x=percentageFeatures), size=0, alpha=1) +
+  facet_grid(cols=vars(fSelector),rows = vars(alg)) +
+  xlab("Percentage of features") +
+  ylab("Percentage of victories") +
+  labs(fill = "Balancing") +
+  scale_fill_brewer(palette = "Blues") +
+  theme(panel.margin.y = unit(0.55, "lines"),
+        panel.margin.x = unit(0, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.background = element_blank(),
+        legend.position="top")
+```
+
+# Balancing strategy average rank
+```{r , fig.width=10, fig.height=10, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+dataRanking = dataRanking_compareBalancing_combinations(df)
+
+ggplot(data = dataRanking, aes(x = percentageFeatures, y = rankMean, color = Balancing)) +
+  geom_line(aes( alpha = 1), size = 0.6 ) +
+  scale_y_reverse() +
+  facet_grid(cols=vars(fSelector),rows = vars(alg)) +
+  xlab("Percentage of features") +
+  ylab("Average rank") +
+  scale_alpha(guide = 'none') +
+  theme(panel.margin.y = unit(0.7, "lines"),
+        panel.margin.x = unit(0.3, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "gray"),
+        legend.position="top"
+  )
+```
+
+
+# Algorithm percentage of victories
+```{r , fig.width=10, fig.height=10, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+dataArea = dataAreaWinners_compareAlgorithms_combinations(df)
+
+ggplot(dataArea, aes(y=freq*100, fill=alg)) + 
+  geom_area(aes(x=percentageFeatures), size=0, alpha=1) +
+  facet_grid(cols=vars(Balancing),rows = vars(fSelector)) +
+  xlab("Percentage of features") +
+  ylab("Percentage of victories") +
+  labs(fill = "Classifier") +
+  scale_fill_brewer(palette = "Blues") +
+  theme(panel.margin.y = unit(0.55, "lines"),
+        panel.margin.x = unit(0, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.background = element_blank(),
+        legend.position="top")
+```
+
+# Algorithm average rank
+```{r , fig.width=10, fig.height=10, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+dataRanking = dataRanking_compareAlgorithms_combinations(df)
+
+ggplot(data = dataRanking, aes(x = percentageFeatures, y = rankMean, color = alg)) +
+  geom_line(aes( alpha = 1), size = 0.6 ) +
+  facet_grid(cols=vars(Balancing),rows=vars(fSelector)) +
+  labs(color = 'Classifier') +
+  xlab("Percentage of features") +
+  ylab("Average rank") +
+  scale_alpha(guide = 'none') +
+  theme(panel.margin.y = unit(0.7, "lines"),
+        panel.margin.x = unit(0.3, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "gray"),
+        legend.position="top"
+  )
+```
+
+
+# Feature selector percentage of victories
+```{r , fig.width=10, fig.height=10, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+dataArea = dataAreaWinners_compareFSelectors_combinations(df)
+
+ggplot(dataArea, aes(y=freq*100, fill=fSelector)) + 
+  geom_area(aes(x=percentageFeatures), size=0, alpha=1) +
+  facet_grid(cols=vars(Balancing),rows = vars(alg)) +
+  xlab("Percentage of features") +
+  ylab("Percentage of victories") +
+  labs(fill = "Feature selector") +
+  scale_fill_brewer(palette = "Blues") +
+  theme(panel.margin.y = unit(0.55, "lines"),
+        panel.margin.x = unit(0, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.background = element_blank(),
+        legend.position="top")
+```
+
+# Feature selector average rank
+```{r , fig.width=10, fig.height=10, echo=FALSE, error=FALSE, warning=FALSE, message=FALSE}
+
+dataRanking = dataRanking_compareAlgorithms_combinations(df)
+
+ggplot(data = dataRanking, aes(x = percentageFeatures, y = rankMean, color = fSelector)) +
+  geom_line(aes( alpha = 1), size = 0.6 ) +
+  scale_y_reverse() +
+  facet_grid(rows=vars(alg),cols = vars(Balancing)) +
+  labs(color = 'Feature selector') +
+  xlab("Percentage of features") +
+  ylab("Average rank") +
+  scale_alpha(guide = 'none') +
+  theme(panel.margin.y = unit(0.7, "lines"),
+        panel.margin.x = unit(0.3, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "gray"),
+        legend.position="top"
+  )
+```
+
+
+# Comparison best balancing configurations
+```{r, fig.width=15, fig.height=5.62}
+
+df = readRDS("rdm/baycomp_table.rds")
+
+ggplot(df, aes(balancing, config, fill=r_prob - l_prob)) +
+    geom_tile(aes(fill = r_prob - l_prob)) +
+    facet_grid(~metric) +
+    geom_text(aes(label = paste0( format(round(r_prob, 2),nsmall=2), "\n",format(round(l_prob, 2),nsmall=2)  )), size = 5) +
+    scale_fill_gradient2(high = "olivedrab2", mid = "white",low = "orangered1") +
+    ylab("Classifier + FS") +
+    xlab("Balancing") +
+    labs(fill = "Probability \n difference ") +
+    theme(
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.spacing = unit(0, "lines"),
+        panel.background = element_blank(),
+        axis.text = element_text(size = 9,color="black"),
+        axis.text.x = element_text(angle = -30, hjust=0.5,vjust=0.5)
+        )
+```
+
+
+
+# Comparison best balancing moment
+```{r, fig.width=10, fig.height=5.62}
+
+df = readRDS("rdm/baycomp_before_vs_after.rds")
+
+ggplot(df, aes(metric, config, fill=r_prob - l_prob)) +
+    geom_tile(aes(fill = r_prob - l_prob)) +
+    facet_grid(~balancing) +
+    geom_text(aes(label = paste0( format(round(r_prob, 2),nsmall=2), "\n",format(round(l_prob, 2),nsmall=2)  )), size = 5) +
+    scale_fill_gradient2(high = "olivedrab2", mid = "white",low = "orangered1") +
+    ylab("Classifier + FS") +
+    xlab("") +
+    labs(fill = "Probability\ndifference") +
+    theme(
+        panel.border = element_rect(color = "black", fill = NA, size = 0),
+        strip.background = element_rect(color = "black", size = 0, fill="white"),
+        panel.spacing = unit(0, "lines"),
+        panel.background = element_blank(), # Quitar fondo cuadriculado
+        axis.text = element_text(size = 9,color="black"))
+```
