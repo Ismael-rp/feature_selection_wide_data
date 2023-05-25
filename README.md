@@ -44,3 +44,20 @@ fSelection_svm_rfe(data)
 ```
 
 The complete example can be seen on file ```example.R```
+
+# Cite this article
+
+```
+@article{ramos2022resampling,
+  title={When is resampling beneficial for feature selection with imbalanced wide data?},
+  author={Ramos-P{\'e}rez, Ismael and Arnaiz-Gonz{\'a}lez, {\'A}lvar and Rodr{\'\i}guez, Juan J and Garc{\'\i}a-Osorio, C{\'e}sar},
+  journal={Expert Systems with Applications},
+  volume={188},
+  pages={116015},
+  year={2022},
+  publisher={Elsevier}
+}
+```
+
+
+
